@@ -1,0 +1,551 @@
+// ─── Prisma Schema ────────────────────────────────────────────────────────────
+// DevTalent — Premium Expert Recruitment for International Development
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  EXPERT
+  RECRUITER
+  ADMIN
+}
+
+enum RecruiterOrganizationRole {
+  OWNER
+  MEMBER
+}
+
+enum OrganizationInvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
+enum ExpertLevel {
+  JUNIOR
+  MID
+  SENIOR
+  PRINCIPAL
+  DIRECTOR
+}
+
+enum MissionStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+}
+
+enum MissionType {
+  SHORT_TERM
+  LONG_TERM
+}
+
+enum WorkMode {
+  REMOTE
+  ON_SITE
+  HYBRID
+}
+
+enum ContractType {
+  CONSULTANT
+  EMPLOYEE
+  FREELANCE
+  FIXED_TERM
+}
+
+enum ApplicationStatus {
+  NEW
+  REVIEWED
+  SHORTLISTED
+  REJECTED
+  HIRED
+}
+
+enum DocumentType {
+  CV
+  COVER_LETTER
+  PORTFOLIO
+  CERTIFICATE
+  REFERENCE_LETTER
+  OTHER
+}
+
+enum NotificationType {
+  APPLICATION_RECEIVED
+  APPLICATION_STATUS_CHANGED
+  MISSION_PUBLISHED
+  MISSION_CLOSED
+  PROFILE_REVIEWED
+  SYSTEM
+}
+
+enum OrganizationType {
+  NGO
+  CONSULTING_FIRM
+  DONOR_AGENCY
+  INTERNATIONAL_ORGANIZATION
+  GOVERNMENT
+  BILATERAL_AGENCY
+  MULTILATERAL_BANK
+  THINK_TANK
+  FOUNDATION
+  OTHER
+}
+
+enum InvitationStatus {
+  SENT
+  OPENED
+  CLICKED
+  APPLIED
+}
+
+enum MissionVisibility {
+  PRIVATE
+  ORGANIZATION
+}
+
+// ─── Auth Models (NextAuth v5 / Auth.js) ─────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  password      String?
+  role          UserRole  @default(EXPERT)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts         Account[]
+  sessions         Session[]
+  expertProfile    ExpertProfile?
+  recruiterProfile RecruiterProfile?
+  notifications    Notification[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model OrganizationInvitation {
+  id             String                       @id @default(cuid())
+  email          String
+  organizationId String
+  role           RecruiterOrganizationRole   @default(MEMBER)
+  token          String                      @unique
+  status         OrganizationInvitationStatus @default(PENDING)
+  expiresAt      DateTime
+  createdAt      DateTime                    @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([organizationId])
+  @@map("organization_invitations")
+}
+
+// ─── Expert Domain ───────────────────────────────────────────────────────────
+
+model ExpertProfile {
+  id                String       @id @default(cuid())
+  userId            String       @unique
+  slug              String?      @unique
+  title             String?
+  bio               String?      @db.Text
+  phone             String?
+  location          String?
+  level             ExpertLevel?
+  yearsOfExperience Int?
+  availability      String?
+  dailyRateMin      Decimal?     @db.Decimal(10, 2)
+  dailyRateMax      Decimal?     @db.Decimal(10, 2)
+  currency          String?      @default("EUR")
+  linkedinUrl       String?
+  portfolioUrl      String?
+  isPublic          Boolean      @default(true)
+  isComplete        Boolean      @default(false)
+  profileScore      Int          @default(0)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expertise         ExpertToExpertise[]
+  sectorExperiences SectorExperience[]
+  regionExperiences RegionExperience[]
+  languages         ExpertLanguage[]
+  donorExperiences  DonorExperience[]
+  documents         UploadedDocument[]
+  applications      Application[]
+  invitations       Invitation[]
+
+  @@map("expert_profiles")
+}
+
+model ExpertToExpertise {
+  expertId    String
+  expertiseId String
+  level       String?
+
+  expert    ExpertProfile @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  expertise Expertise     @relation(fields: [expertiseId], references: [id], onDelete: Cascade)
+
+  @@id([expertId, expertiseId])
+  @@map("expert_to_expertise")
+}
+
+model SectorExperience {
+  id        String  @id @default(cuid())
+  expertId  String
+  sector    String
+  years     Int?
+  isPrimary Boolean @default(false)
+
+  expert ExpertProfile @relation(fields: [expertId], references: [id], onDelete: Cascade)
+
+  @@map("sector_experiences")
+}
+
+model RegionExperience {
+  id       String  @id @default(cuid())
+  expertId String
+  country  String
+  region   String?
+
+  expert ExpertProfile @relation(fields: [expertId], references: [id], onDelete: Cascade)
+
+  @@map("region_experiences")
+}
+
+model DonorExperience {
+  id       String  @id @default(cuid())
+  expertId String
+  donor    String
+  years    Int?
+  role     String?
+  projects Int?
+
+  expert ExpertProfile @relation(fields: [expertId], references: [id], onDelete: Cascade)
+
+  @@map("donor_experiences")
+}
+
+model ExpertLanguage {
+  expertId    String
+  languageId  String
+  proficiency String
+
+  expert   ExpertProfile @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  language Language      @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  @@id([expertId, languageId])
+  @@map("expert_languages")
+}
+
+// ─── Recruiter Domain ────────────────────────────────────────────────────────
+
+model RecruiterProfile {
+  id               String                    @id @default(cuid())
+  userId           String                    @unique
+  jobTitle         String?
+  organizationId   String?
+  organizationRole RecruiterOrganizationRole @default(MEMBER)
+  phone            String?
+  createdAt        DateTime                  @default(now())
+  updatedAt        DateTime                  @updatedAt
+
+  user          User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization  Organization?        @relation(fields: [organizationId], references: [id])
+  missions      Mission[]
+  invitations   Invitation[]
+  internalNotes MissionInternalNote[]
+
+  @@index([organizationId])
+  @@index([organizationRole])
+  @@map("recruiter_profiles")
+}
+
+model Organization {
+  id          String                   @id @default(cuid())
+  name        String
+  type        OrganizationType
+  country     String?
+  website     String?
+  description String?                  @db.Text
+  logoUrl     String?
+  isVerified  Boolean                  @default(false)
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+
+  recruiters  RecruiterProfile[]
+  missions    Mission[]
+  invitations OrganizationInvitation[]
+
+  @@map("organizations")
+}
+
+// ─── Mission Domain ───────────────────────────────────────────────────────────
+
+model Mission {
+  id                String            @id @default(cuid())
+  slug              String            @unique
+  title             String
+  description       String            @db.Text
+  organizationId    String?
+  recruiterId       String
+  sector            String
+  country           String?
+  region            String?
+  workMode          WorkMode
+  contractType      ContractType
+  missionType       MissionType
+  visibility        MissionVisibility @default(PRIVATE)
+  duration          String?
+  seniorityRequired ExpertLevel?
+  donorFunder       String?
+  deadline          DateTime?
+  startDate         DateTime?
+  budgetMin         Decimal?          @db.Decimal(12, 2)
+  budgetMax         Decimal?          @db.Decimal(12, 2)
+  budgetCurrency    String?           @default("EUR")
+  status            MissionStatus     @default(DRAFT)
+  viewCount         Int               @default(0)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  publishedAt       DateTime?
+  closedAt          DateTime?
+
+  organization      Organization?        @relation(fields: [organizationId], references: [id])
+  recruiter         RecruiterProfile     @relation(fields: [recruiterId], references: [id])
+  applications      Application[]
+  languages         MissionLanguage[]
+  requiredExpertise MissionToExpertise[]
+  invitations       Invitation[]
+  internalNotes     MissionInternalNote[]
+
+  @@index([organizationId])
+  @@index([recruiterId])
+  @@index([visibility])
+  @@map("missions")
+}
+
+model MissionToExpertise {
+  missionId   String
+  expertiseId String
+  isRequired  Boolean @default(true)
+
+  mission   Mission   @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  expertise Expertise @relation(fields: [expertiseId], references: [id], onDelete: Cascade)
+
+  @@id([missionId, expertiseId])
+  @@map("mission_to_expertise")
+}
+
+model MissionLanguage {
+  missionId  String
+  languageId String
+  isRequired Boolean @default(true)
+
+  mission  Mission  @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  language Language @relation(fields: [languageId], references: [id], onDelete: Cascade)
+
+  @@id([missionId, languageId])
+  @@map("mission_languages")
+}
+
+model MissionInternalNote {
+  id          String   @id @default(cuid())
+  missionId   String
+  recruiterId String
+  content     String   @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  mission   Mission          @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  recruiter RecruiterProfile @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+
+  @@index([missionId, createdAt])
+  @@index([recruiterId])
+  @@map("mission_internal_notes")
+}
+
+// ─── Application Domain ───────────────────────────────────────────────────────
+
+model Application {
+  id             String            @id @default(cuid())
+  expertId       String
+  missionId      String
+  coverNote      String?           @db.Text
+  expectedRate   Decimal?          @db.Decimal(10, 2)
+  availability   String?
+  status         ApplicationStatus @default(NEW)
+  recruiterNotes String?           @db.Text
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  reviewedAt     DateTime?
+  shortlistedAt  DateTime?
+  closedAt       DateTime?
+
+  expert    ExpertProfile         @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  mission   Mission               @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  documents ApplicationDocument[]
+
+  @@unique([expertId, missionId])
+  @@map("applications")
+}
+
+model ApplicationDocument {
+  id            String @id @default(cuid())
+  applicationId String
+  documentId    String
+
+  application Application      @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  document    UploadedDocument @relation(fields: [documentId], references: [id])
+
+  @@unique([applicationId, documentId])
+  @@map("application_documents")
+}
+
+// ─── Invitation Tracking ──────────────────────────────────────────────────────
+
+model Invitation {
+  id          String           @id @default(cuid())
+  missionId   String
+  expertId    String
+  recruiterId String
+  expertEmail String
+  status      InvitationStatus @default(SENT)
+
+  sentAt         DateTime  @default(now())
+  firstOpenedAt  DateTime?
+  lastOpenedAt   DateTime?
+  openCount      Int       @default(0)
+  firstClickedAt DateTime?
+  lastClickedAt  DateTime?
+  clickCount     Int       @default(0)
+  appliedAt      DateTime?
+  lastActivityAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mission   Mission          @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  expert    ExpertProfile    @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  recruiter RecruiterProfile @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+
+  @@unique([missionId, expertId])
+  @@index([missionId])
+  @@index([expertId])
+  @@index([recruiterId])
+  @@map("invitations")
+}
+
+// ─── Shared Domain Models ─────────────────────────────────────────────────────
+
+model Expertise {
+  id       String  @id @default(cuid())
+  name     String  @unique
+  slug     String  @unique
+  category String?
+
+  experts  ExpertToExpertise[]
+  missions MissionToExpertise[]
+
+  @@map("expertise")
+}
+
+model Language {
+  id   String @id @default(cuid())
+  name String @unique
+  code String @unique
+
+  expertLanguages  ExpertLanguage[]
+  missionLanguages MissionLanguage[]
+
+  @@map("languages")
+}
+
+model UploadedDocument {
+  id        String       @id @default(cuid())
+  expertId  String
+  type      DocumentType @default(CV)
+  name      String
+  url       String
+  key       String
+  size      Int?
+  mimeType  String?
+  isPrimary Boolean      @default(false)
+  createdAt DateTime     @default(now())
+
+  expert       ExpertProfile         @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  applications ApplicationDocument[]
+
+  @@map("uploaded_documents")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String           @db.Text
+  isRead    Boolean          @default(false)
+  link      String?
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
