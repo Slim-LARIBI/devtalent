@@ -11,11 +11,14 @@ import {
   Mail,
   MapPin,
   SlidersHorizontal,
+  Sparkles,
+  Eye,
 } from "lucide-react";
 import { inviteExpertsAction } from "@/app/(recruiter)/recruiter/experts/actions";
 
 export type RecruiterExpertItem = {
   id: string;
+  slug: string | null;
   name: string;
   email: string;
   title: string;
@@ -34,6 +37,8 @@ export type RecruiterExpertItem = {
 type FindExpertsClientProps = {
   experts: RecruiterExpertItem[];
   missionId?: string;
+  missionTitle?: string | null;
+  missionOrganizationName?: string | null;
 };
 
 const LEVELS = ["ALL", "JUNIOR", "MID", "SENIOR", "PRINCIPAL", "DIRECTOR"] as const;
@@ -55,6 +60,8 @@ function getScoreClasses(score: number) {
 export function FindExpertsClient({
   experts,
   missionId,
+  missionTitle,
+  missionOrganizationName,
 }: FindExpertsClientProps) {
   const [search, setSearch] = useState("");
   const [level, setLevel] = useState<(typeof LEVELS)[number]>("ALL");
@@ -100,8 +107,7 @@ export function FindExpertsClient({
   function toggleSelectAllVisible() {
     const visibleIds = filteredExperts.map((expert) => expert.id);
     const allVisibleSelected =
-      visibleIds.length > 0 &&
-      visibleIds.every((id) => selectedIds.includes(id));
+      visibleIds.length > 0 && visibleIds.every((id) => selectedIds.includes(id));
 
     if (allVisibleSelected) {
       setSelectedIds((prev) => prev.filter((id) => !visibleIds.includes(id)));
@@ -115,7 +121,9 @@ export function FindExpertsClient({
     setInviteError("");
 
     if (!missionId) {
-      setInviteError("Mission context is missing. Please open Find Experts from a mission detail page.");
+      setInviteError(
+        "Mission context is missing. Please open Find Experts from a mission detail page."
+      );
       return;
     }
 
@@ -135,13 +143,16 @@ export function FindExpertsClient({
         return;
       }
 
-      setInviteMessage(`${result.sentCount} invitation email(s) sent successfully.`);
+      setInviteMessage(result.message || `${result.sentCount} invitation email(s) sent successfully.`);
+      setSelectedIds([]);
     });
   }
 
   const allVisibleSelected =
     filteredExperts.length > 0 &&
     filteredExperts.every((expert) => selectedIds.includes(expert.id));
+
+  const topMatches = filteredExperts.filter((expert) => expert.profileScore >= 85).length;
 
   return (
     <div className="p-6 space-y-6">
@@ -152,7 +163,7 @@ export function FindExpertsClient({
             Find Experts
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-text-secondary">
-            Search your real expert database, filter relevant profiles, and invite selected experts in one click.
+            Search your expert database, surface strong matches, and invite the best profiles in one click.
           </p>
         </div>
 
@@ -162,8 +173,24 @@ export function FindExpertsClient({
       </div>
 
       {missionId ? (
-        <div className="rounded-2xl border border-brand/20 bg-brand/10 px-4 py-3 text-sm text-brand">
-          You are sourcing experts for a specific mission. Invitations will be sent with mission context.
+        <div className="rounded-2xl border border-brand/20 bg-brand/10 p-4">
+          <div className="flex items-start gap-3">
+            <div className="rounded-xl bg-white/10 p-2 text-brand">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-brand">
+                You are sourcing for a specific mission
+              </p>
+              <p className="mt-1 text-sm text-text-secondary">
+                {missionTitle || "Mission selected"}
+                {missionOrganizationName ? ` · ${missionOrganizationName}` : ""}
+              </p>
+              <p className="mt-1 text-xs text-text-muted">
+                Invitations sent from this page will be linked to that mission.
+              </p>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-700">
@@ -207,14 +234,12 @@ export function FindExpertsClient({
 
         <div className="rounded-2xl border border-border bg-surface p-5">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-text-secondary">High score</p>
+            <p className="text-sm text-text-secondary">High match</p>
             <div className="rounded-lg bg-emerald-500/10 p-2 text-emerald-300">
               <Briefcase className="h-4 w-4" />
             </div>
           </div>
-          <p className="mt-4 text-3xl font-semibold text-text-primary">
-            {filteredExperts.filter((expert) => expert.profileScore >= 85).length}
-          </p>
+          <p className="mt-4 text-3xl font-semibold text-text-primary">{topMatches}</p>
           <p className="mt-1 text-sm text-text-muted">Profiles above 85%</p>
         </div>
       </div>
@@ -379,16 +404,16 @@ export function FindExpertsClient({
                         </span>
                       </div>
 
-                      {expert.reasons && expert.reasons.length > 0 && (
+                      {expert.reasons && expert.reasons.length > 0 ? (
                         <ul className="mt-3 space-y-1 text-xs text-text-secondary">
-                          {expert.reasons.map((reason, index) => (
+                          {expert.reasons.slice(0, 3).map((reason, index) => (
                             <li key={index} className="flex items-center gap-2">
                               <span className="h-1.5 w-1.5 rounded-full bg-brand" />
                               {reason}
                             </li>
                           ))}
                         </ul>
-                      )}
+                      ) : null}
 
                       <p className="mt-2 text-sm text-text-secondary">{expert.title}</p>
 
@@ -468,11 +493,11 @@ export function FindExpertsClient({
                     </div>
 
                     <Link
-                      href="#"
-                      className="inline-flex items-center gap-2 text-sm font-medium text-brand"
+                      href={expert.slug ? `/experts/${expert.slug}` : "#"}
+                      className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2 text-sm font-medium text-text-primary transition hover:bg-surface-raised"
                     >
+                      <Eye className="h-4 w-4" />
                       View profile
-                      <Globe2 className="h-4 w-4" />
                     </Link>
                   </div>
                 </div>

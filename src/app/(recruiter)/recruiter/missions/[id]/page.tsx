@@ -10,6 +10,9 @@ import {
   Lock,
   Users,
   UserRound,
+  Search,
+  Pencil,
+  BarChart3,
 } from "lucide-react";
 import { MissionInternalNotes } from "@/components/recruiter/mission-internal-notes";
 
@@ -179,7 +182,7 @@ export default async function RecruiterMissionDetailPage({ params }: PageProps) 
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div>
           <p className="text-sm text-text-muted">Recruiter / Missions / Detail</p>
 
@@ -213,7 +216,33 @@ export default async function RecruiterMissionDetailPage({ params }: PageProps) 
           </p>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href={`/recruiter/experts?missionId=${mission.id}`}
+            className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-medium text-white shadow-brand-glow transition hover:opacity-95"
+          >
+            <Search className="h-4 w-4" />
+            Find experts
+          </Link>
+
+          <Link
+            href={`/recruiter/missions/${mission.id}/tracking`}
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:bg-surface-raised"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Tracking
+          </Link>
+
+          {isOwnerRecruiter ? (
+            <Link
+              href={`/recruiter/missions/${mission.id}/edit`}
+              className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:bg-surface-raised"
+            >
+              <Pencil className="h-4 w-4" />
+              Edit mission
+            </Link>
+          ) : null}
+
           <Link
             href="/recruiter/missions"
             className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5 text-sm font-medium text-text-primary transition hover:bg-surface-raised"
@@ -223,6 +252,12 @@ export default async function RecruiterMissionDetailPage({ params }: PageProps) 
           </Link>
         </div>
       </div>
+
+      {!isOwnerRecruiter && isSharedMission ? (
+        <div className="rounded-2xl border border-brand/20 bg-brand/10 px-4 py-3 text-sm text-brand">
+          This mission was shared by a teammate. You can source experts, review tracking, and collaborate with internal notes.
+        </div>
+      ) : null}
 
       <div className="grid gap-4 xl:grid-cols-4">
         <div className="rounded-2xl border border-border bg-surface p-5">

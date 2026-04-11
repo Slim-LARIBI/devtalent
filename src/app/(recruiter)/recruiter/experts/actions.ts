@@ -13,6 +13,14 @@ const inviteExpertsSchema = z.object({
 
 type InviteExpertsInput = z.infer<typeof inviteExpertsSchema>;
 
+function getBaseUrl() {
+  return (
+    process.env.NEXTAUTH_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "http://localhost:3000"
+  );
+}
+
 export async function inviteExpertsAction(input: InviteExpertsInput) {
   const session = await auth();
 
@@ -53,18 +61,27 @@ export async function inviteExpertsAction(input: InviteExpertsInput) {
   const mission = await prisma.mission.findFirst({
     where: {
       id: parsed.data.missionId,
-      recruiterId: recruiter.id,
+      OR: [
+        {
+          recruiterId: recruiter.id,
+        },
+        {
+          organizationId: recruiter.organizationId,
+          visibility: "ORGANIZATION",
+        },
+      ],
     },
     select: {
       id: true,
       title: true,
       country: true,
       sector: true,
+      visibility: true,
     },
   });
 
   if (!mission) {
-    return { ok: false, error: "Mission not found." };
+    return { ok: false, error: "Mission not found or access denied." };
   }
 
   const experts = await prisma.expertProfile.findMany({
@@ -88,6 +105,8 @@ export async function inviteExpertsAction(input: InviteExpertsInput) {
   if (experts.length === 0) {
     return { ok: false, error: "No valid experts found." };
   }
+
+  const baseUrl = getBaseUrl();
 
   let sentCount = 0;
   let skippedCount = 0;
@@ -131,12 +150,12 @@ export async function inviteExpertsAction(input: InviteExpertsInput) {
       },
     });
 
-    const missionLink = `http://localhost:3000/api/invitations/${invitation.id}/click?url=${encodeURIComponent(
-      `http://localhost:3000/missions/${mission.id}`
+    const destinationMissionUrl = `${baseUrl}/missions/${mission.id}`;
+    const missionLink = `${baseUrl}/api/invitations/${invitation.id}/click?url=${encodeURIComponent(
+      destinationMissionUrl
     )}`;
+    const openPixelUrl = `${baseUrl}/api/invitations/${invitation.id}/open`;
 
-    const openPixelUrl = `http://localhost:3000/api/invitations/${invitation.id}/open`;
-    console.log("SENDING INVITE TO:", expert.user.email);
     await sendEmail({
       to: expert.user.email,
       subject: `New mission invitation: ${mission.title}`,
@@ -154,9 +173,22 @@ export async function inviteExpertsAction(input: InviteExpertsInput) {
     sentCount += 1;
   }
 
+  if (sentCount === 0 && skippedCount > 0) {
+    return {
+      ok: false,
+      error: "All selected experts were already invited or unavailable.",
+      sentCount,
+      skippedCount,
+    };
+  }
+
   return {
     ok: true,
     sentCount,
     skippedCount,
+    message:
+      skippedCount > 0
+        ? `${sentCount} invitation(s) sent, ${skippedCount} skipped.`
+        : `${sentCount} invitation(s) sent successfully.`,
   };
 }
