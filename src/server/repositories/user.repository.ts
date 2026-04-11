@@ -73,12 +73,23 @@ export async function findAllUsers(opts?: {
         isActive: true,
         createdAt: true,
         updatedAt: true,
-        _count: {
+       
+        expertProfile: {
           select: {
-            expertProfile: true,
-            recruiterProfile: true,
+            id: true,
           },
         },
+        recruiterProfile: {
+          select: {
+            id: true,
+          },
+        },
+
+
+
+
+
+
       },
     }),
     prisma.user.count({ where }),

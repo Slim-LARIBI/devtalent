@@ -35,7 +35,7 @@ const updateMissionSchema = z.object({
 
 type UpdateMissionInput = z.infer<typeof updateMissionSchema>;
 
-export async function updateMissionAction(input: UpdateMissionInput) {
+export async function updateMissionAction(input: Partial<UpdateMissionInput>) {
   const session = await auth();
 
   if (!session?.user?.id || session.user.role !== "RECRUITER") {

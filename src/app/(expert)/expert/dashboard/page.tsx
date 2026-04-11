@@ -145,12 +145,15 @@ export default async function ExpertDashboardPage() {
               </span>
             </div>
           </div>
-          <Button variant="ghost" size="sm" asChild className="shrink-0">
-            <Link href="/expert/profile">
-              Complete profile
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </Button>
+          
+<Button variant="ghost" size="sm" asChild className="shrink-0">
+  <Link href="/expert/my-profile">
+    Complete profile
+    <ArrowRight className="h-3.5 w-3.5" />
+  </Link>
+</Button>
+
+
         </div>
       )}
 

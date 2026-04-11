@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 
 type RouteProps = {
   params: Promise<{ id: string }>;
@@ -34,5 +34,5 @@ export async function GET(request: Request, { params }: RouteProps) {
     });
   }
 
-  redirect(targetUrl);
+  return NextResponse.redirect(targetUrl);
 }

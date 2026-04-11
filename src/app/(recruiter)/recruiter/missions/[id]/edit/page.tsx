@@ -26,7 +26,7 @@ function splitDescription(description: string | null) {
 
 function formatDateInput(value: Date | null) {
   if (!value) return "";
-  return new Date(value).toISOString().split("T")[0];
+  return new Date(value).toISOString().split("T")[0] ?? "";
 }
 
 export default async function EditMissionPage({ params }: PageProps) {

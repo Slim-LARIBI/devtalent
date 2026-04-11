@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 import { Globe, Twitter, Linkedin, Mail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
@@ -84,7 +85,7 @@ export function Footer() {
                 {links.map((link) => (
                   <li key={link.href}>
                     <Link
-                      href={link.href}
+                      href={link.href as Route}
                       className="text-sm text-text-secondary transition-colors hover:text-text-primary"
                     >
                       {link.label}

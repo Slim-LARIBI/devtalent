@@ -1,5 +1,5 @@
 "use client";
-
+import type { Route } from "next";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -61,7 +61,7 @@ export function Navbar() {
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
-                  href={link.href}
+                  href={link.href as Route}
                   className={cn(
                     "px-3.5 py-2 rounded-lg text-sm font-medium transition-colors duration-150",
                     pathname === link.href
@@ -110,7 +110,7 @@ export function Navbar() {
               {NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
-                  href={link.href}
+                  href={link.href as Route}
                   className="flex items-center px-3 py-2.5 rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-surface-raised transition-colors"
                 >
                   {link.label}

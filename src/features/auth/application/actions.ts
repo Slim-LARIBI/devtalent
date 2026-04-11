@@ -13,7 +13,7 @@ import type { UserRole } from "@prisma/client";
 // ─── Response shape ───────────────────────────────────────────────────────────
 
 export type ActionResult =
-  | { success: true }
+  | { success: true; error?: undefined; fieldErrors?: undefined }
   | { success: false; error: string; fieldErrors?: Record<string, string> };
 
 // ─── Register ─────────────────────────────────────────────────────────────────

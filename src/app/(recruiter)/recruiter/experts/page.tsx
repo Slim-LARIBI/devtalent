@@ -128,6 +128,7 @@ export default async function RecruiterExpertsPage({ searchParams }: PageProps) 
 
       return {
         id: expert.id,
+        slug: expert.slug ?? expert.id,
         name: expert.user.name || "Unnamed expert",
         email: expert.user.email,
         title: expert.title || "No title",

@@ -15,7 +15,8 @@ import {
 } from "@/server/repositories/mission.repository";
 import { findExpertProfileByUserId } from "@/server/repositories/expert.repository";
 import { APPLICATION_STATUS_TRANSITIONS } from "@/types/application";
-import type { ApplicationStatus } from "@prisma/client";
+import type { ApplicationStatus as PrismaApplicationStatus } from "@prisma/client";
+import type { ApplicationStatus as CommonApplicationStatus } from "@/types/common";
 import type { CreateApplicationDTO, UpdateApplicationStatusDTO } from "@/types/application";
 
 export class ApplicationError extends Error {
@@ -133,18 +134,22 @@ export async function updateStatus(
   }
 
   // Validate state transition
-  const currentStatus = application.status as ApplicationStatus;
+  const currentStatus = application.status as CommonApplicationStatus;
   const allowedTransitions =
     APPLICATION_STATUS_TRANSITIONS[currentStatus] ?? [];
 
-  if (!allowedTransitions.includes(data.status as ApplicationStatus)) {
+  if (!allowedTransitions.includes(data.status as CommonApplicationStatus)) {
     throw new ApplicationError(
       `Cannot transition application from ${currentStatus} to ${data.status}`,
       "INVALID_TRANSITION"
     );
   }
 
-  return updateApplicationStatus(applicationId, data.status as ApplicationStatus, data.recruiterNotes);
+  return updateApplicationStatus(
+  applicationId,
+  data.status as PrismaApplicationStatus,
+  data.recruiterNotes
+);
 }
 
 export async function withdrawApplication(applicationId: string, userId: string) {

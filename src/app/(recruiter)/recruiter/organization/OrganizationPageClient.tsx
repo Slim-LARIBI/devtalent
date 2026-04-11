@@ -122,7 +122,7 @@ export default function OrganizationPageClient({
       }
 
       setInviteSuccess("Invitation link generated successfully ✅");
-      setInviteLink(res.inviteLink);
+      setInviteLink(res.inviteLink ?? "");
       setInviteEmail("");
     });
   }

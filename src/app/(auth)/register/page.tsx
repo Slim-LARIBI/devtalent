@@ -1,19 +1,26 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { Suspense, useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Eye, EyeOff, Mail, Lock, User, UserCircle, Briefcase, CheckCircle2 } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  User,
+  UserCircle,
+  Briefcase,
+  CheckCircle2,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { registerAction, type ActionResult } from "@/features/auth/application/actions";
-import { Button }    from "@/components/ui/button";
-import { Input }     from "@/components/ui/input";
-import { Label }     from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { cn }        from "@/lib/utils";
-
-// ─── Role selector ────────────────────────────────────────────────────────────
+import { cn } from "@/lib/utils";
 
 type Role = "EXPERT" | "RECRUITER";
 
@@ -26,7 +33,14 @@ interface RoleCardProps {
   description: string;
 }
 
-function RoleCard({ role, selected, onSelect, icon: Icon, title, description }: RoleCardProps) {
+function RoleCard({
+  role,
+  selected,
+  onSelect,
+  icon: Icon,
+  title,
+  description,
+}: RoleCardProps) {
   return (
     <button
       type="button"
@@ -41,46 +55,60 @@ function RoleCard({ role, selected, onSelect, icon: Icon, title, description }: 
       {selected && (
         <CheckCircle2 className="absolute right-3 top-3 h-4 w-4 text-brand" />
       )}
-      <div className={cn(
-        "flex h-9 w-9 items-center justify-center rounded-lg [&_svg]:size-4.5",
-        selected ? "bg-brand text-white" : "bg-surface-overlay text-text-muted"
-      )}>
+      <div
+        className={cn(
+          "flex h-9 w-9 items-center justify-center rounded-lg [&_svg]:size-4.5",
+          selected ? "bg-brand text-white" : "bg-surface-overlay text-text-muted"
+        )}
+      >
         <Icon />
       </div>
       <div>
-        <p className={cn("text-sm font-semibold", selected ? "text-text-primary" : "text-text-secondary")}>
+        <p
+          className={cn(
+            "text-sm font-semibold",
+            selected ? "text-text-primary" : "text-text-secondary"
+          )}
+        >
           {title}
         </p>
-        <p className="text-xs text-text-muted leading-relaxed mt-0.5">{description}</p>
+        <p className="text-xs text-text-muted leading-relaxed mt-0.5">
+          {description}
+        </p>
       </div>
     </button>
   );
 }
 
-// ─── Submit button ─────────────────────────────────────────────────────────────
-
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="brand" className="w-full" size="lg" loading={pending} disabled={pending}>
+    <Button
+      type="submit"
+      variant="brand"
+      className="w-full"
+      size="lg"
+      loading={pending}
+      disabled={pending}
+    >
       {pending ? "Creating account…" : "Create account"}
     </Button>
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
-export default function RegisterPage() {
+function RegisterForm() {
   const searchParams = useSearchParams();
-  const defaultRole  = (searchParams.get("role") as Role | null) ?? "EXPERT";
+  const defaultRole = (searchParams.get("role") as Role | null) ?? "EXPERT";
 
-  const [role, setRole]       = useState<Role>(defaultRole);
+  const [role, setRole] = useState<Role>(defaultRole);
   const [showPwd, setShowPwd] = useState(false);
-  const [state, formAction]   = useActionState<ActionResult | null, FormData>(registerAction, null);
+  const [state, formAction] = useActionState<ActionResult | null, FormData>(
+    registerAction,
+    null
+  );
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      {/* Header */}
       <div className="space-y-1">
         <h1 className="text-display-sm font-bold text-text-primary tracking-tight">
           Create your account
@@ -90,7 +118,6 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      {/* Error banner */}
       <AnimatePresence>
         {state && !state.success && (
           <motion.div
@@ -105,8 +132,6 @@ export default function RegisterPage() {
       </AnimatePresence>
 
       <form action={formAction} className="space-y-5">
-
-        {/* Role selector */}
         <div className="space-y-2">
           <Label>I want to…</Label>
           <div className="grid grid-cols-2 gap-3">
@@ -127,13 +152,13 @@ export default function RegisterPage() {
               description="Post missions and find qualified consultants"
             />
           </div>
-          {/* Hidden input for role */}
           <input type="hidden" name="role" value={role} />
         </div>
 
-        {/* Full name */}
         <div className="space-y-1.5">
-          <Label htmlFor="name" required>Full name</Label>
+          <Label htmlFor="name" required>
+            Full name
+          </Label>
           <Input
             id="name"
             name="name"
@@ -149,9 +174,10 @@ export default function RegisterPage() {
           )}
         </div>
 
-        {/* Email */}
         <div className="space-y-1.5">
-          <Label htmlFor="email" required>Work email</Label>
+          <Label htmlFor="email" required>
+            Work email
+          </Label>
           <Input
             id="email"
             name="email"
@@ -167,7 +193,6 @@ export default function RegisterPage() {
           )}
         </div>
 
-        {/* Password */}
         <div className="space-y-1.5">
           <Label htmlFor="password" required hint="Min. 8 chars, uppercase & number">
             Password
@@ -191,17 +216,24 @@ export default function RegisterPage() {
               tabIndex={-1}
               aria-label={showPwd ? "Hide password" : "Show password"}
             >
-              {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showPwd ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
             </button>
           </div>
           {state?.fieldErrors?.["password"] && (
-            <p className="text-xs text-destructive">{state.fieldErrors["password"]}</p>
+            <p className="text-xs text-destructive">
+              {state.fieldErrors["password"]}
+            </p>
           )}
         </div>
 
-        {/* Confirm password */}
         <div className="space-y-1.5">
-          <Label htmlFor="confirmPassword" required>Confirm password</Label>
+          <Label htmlFor="confirmPassword" required>
+            Confirm password
+          </Label>
           <Input
             id="confirmPassword"
             name="confirmPassword"
@@ -213,11 +245,12 @@ export default function RegisterPage() {
             required
           />
           {state?.fieldErrors?.["confirmPassword"] && (
-            <p className="text-xs text-destructive">{state.fieldErrors["confirmPassword"]}</p>
+            <p className="text-xs text-destructive">
+              {state.fieldErrors["confirmPassword"]}
+            </p>
           )}
         </div>
 
-        {/* Terms */}
         <div className="flex items-start gap-2.5">
           <input
             id="acceptTerms"
@@ -226,13 +259,22 @@ export default function RegisterPage() {
             className="mt-0.5 h-4 w-4 rounded border-border bg-surface accent-brand cursor-pointer"
             required
           />
-          <label htmlFor="acceptTerms" className="text-xs text-text-secondary leading-relaxed cursor-pointer">
+          <label
+            htmlFor="acceptTerms"
+            className="text-xs text-text-secondary leading-relaxed cursor-pointer"
+          >
             I agree to DevTalent&apos;s{" "}
-            <Link href="/terms" className="text-brand hover:text-brand-light transition-colors">
+            <Link
+              href="/terms"
+              className="text-brand hover:text-brand-light transition-colors"
+            >
               Terms of Service
             </Link>{" "}
             and{" "}
-            <Link href="/privacy" className="text-brand hover:text-brand-light transition-colors">
+            <Link
+              href="/privacy"
+              className="text-brand hover:text-brand-light transition-colors"
+            >
               Privacy Policy
             </Link>
           </label>
@@ -241,14 +283,12 @@ export default function RegisterPage() {
         <SubmitButton />
       </form>
 
-      {/* Divider */}
       <div className="flex items-center gap-3">
         <Separator className="flex-1" />
         <span className="text-xs text-text-muted">or</span>
         <Separator className="flex-1" />
       </div>
 
-      {/* Google OAuth */}
       <form action="/api/auth/signin/google" method="POST">
         <input type="hidden" name="callbackUrl" value="/dashboard" />
         <Button type="submit" variant="secondary" className="w-full" size="lg">
@@ -262,13 +302,23 @@ export default function RegisterPage() {
         </Button>
       </form>
 
-      {/* Login link */}
       <p className="text-center text-sm text-text-secondary">
         Already have an account?{" "}
-        <Link href="/login" className="font-medium text-brand hover:text-brand-light transition-colors">
+        <Link
+          href="/login"
+          className="font-medium text-brand hover:text-brand-light transition-colors"
+        >
           Sign in
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="space-y-6 animate-fade-in-up" />}>
+      <RegisterForm />
+    </Suspense>
   );
 }

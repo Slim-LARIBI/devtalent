@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import type { Route } from "next";
 import { Menu, Bell, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/ui/avatar";
@@ -50,7 +51,7 @@ export function DashboardHeader({
                 )}
                 {crumb.href && i < breadcrumbs.length - 1 ? (
                   <Link
-                    href={crumb.href}
+                    href={crumb.href as Route}
                     className="text-text-muted hover:text-text-secondary transition-colors"
                   >
                     {crumb.label}

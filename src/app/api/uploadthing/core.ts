@@ -4,10 +4,10 @@ const f = createUploadthing();
 
 export const ourFileRouter = {
   expertDocuments: f({
-    "application/pdf": { maxFileSize: "10MB", maxFileCount: 1 },
-    "application/msword": { maxFileSize: "10MB", maxFileCount: 1 },
+    "application/pdf": { maxFileSize: "8MB", maxFileCount: 1 },
+    "application/msword": { maxFileSize: "8MB", maxFileCount: 1 },
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
-      maxFileSize: "10MB",
+      maxFileSize: "8MB",
       maxFileCount: 1,
     },
   }).onUploadComplete(async ({ file }) => {

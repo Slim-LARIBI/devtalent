@@ -16,9 +16,11 @@ async function main() {
   console.log(`Found ${organizations.length} organization(s).`);
 
   for (const organization of organizations) {
-    if (organization.recruiters.length === 0) continue;
+    const firstRecruiter = organization.recruiters[0];
 
-    const [firstRecruiter, ...otherRecruiters] = organization.recruiters;
+    if (!firstRecruiter) continue;
+
+    const otherRecruiters = organization.recruiters.slice(1);
 
     await prisma.recruiterProfile.update({
       where: { id: firstRecruiter.id },

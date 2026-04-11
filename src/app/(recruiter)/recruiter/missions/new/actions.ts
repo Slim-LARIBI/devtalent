@@ -165,11 +165,12 @@ export async function createMissionAction(input: CreateMissionInput) {
           },
         });
 
-        const matchedLanguages = allLanguages.filter((item) => {
+const requiredLanguages = data.requiredLanguages ?? [];       
+ const matchedLanguages = allLanguages.filter((item) => {
           const itemName = normalizeText(item.name);
           const itemCode = normalizeText(item.code);
 
-          return data.requiredLanguages.some((inputLang) => {
+          return requiredLanguages.some((inputLang) => {
             const normalizedInput = normalizeText(inputLang);
 
             return (

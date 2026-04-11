@@ -110,9 +110,13 @@ export async function updateApplicationStatusAction(
     data: {
       userId: application.expert.userId,
       type: "APPLICATION_STATUS_CHANGED",
-      title: notificationTitleMap[parsed.data.status],
-      message: notificationMessageMap[parsed.data.status],
-      link: "/expert/applications",
+
+      title: notificationTitleMap[parsed.data.status] ?? "Application updated",
+message:
+  notificationMessageMap[parsed.data.status] ??
+  `Your application for ${application.mission.title} was updated.`,
+      
+link: "/expert/applications",
       metadata: {
         applicationId: application.id,
         missionId: application.mission.id,

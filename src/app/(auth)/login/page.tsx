@@ -1,18 +1,15 @@
 "use client";
 
-import { useActionState } from "react";
+import { Suspense, useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
-import { useState } from "react";
 import { loginAction, type ActionResult } from "@/features/auth/application/actions";
-import { Button }    from "@/components/ui/button";
-import { Input }     from "@/components/ui/input";
-import { Label }     from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-
-// ─── Submit button with pending state ─────────────────────────────────────────
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -30,17 +27,17 @@ function SubmitButton() {
   );
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-
-export default function LoginPage() {
-  const searchParams  = useSearchParams();
-  const callbackUrl   = searchParams.get("callbackUrl") ?? "/dashboard";
-  const [showPwd, setShowPwd]     = useState(false);
-  const [state, formAction]       = useActionState<ActionResult | null, FormData>(loginAction, null);
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
+  const [showPwd, setShowPwd] = useState(false);
+  const [state, formAction] = useActionState<ActionResult | null, FormData>(
+    loginAction,
+    null
+  );
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      {/* Header */}
       <div className="space-y-1">
         <h1 className="text-display-sm font-bold text-text-primary tracking-tight">
           Welcome back
@@ -50,18 +47,15 @@ export default function LoginPage() {
         </p>
       </div>
 
-      {/* Error banner */}
       {state && !state.success && (
         <div className="rounded-lg border border-destructive/20 bg-destructive-muted/30 px-4 py-3 text-sm text-destructive animate-fade-in">
           {state.error}
         </div>
       )}
 
-      {/* Form */}
       <form action={formAction} className="space-y-4">
         <input type="hidden" name="callbackUrl" value={callbackUrl} />
 
-        {/* Email */}
         <div className="space-y-1.5">
           <Label htmlFor="email">Email address</Label>
           <Input
@@ -75,7 +69,6 @@ export default function LoginPage() {
           />
         </div>
 
-        {/* Password */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
@@ -104,7 +97,11 @@ export default function LoginPage() {
               tabIndex={-1}
               aria-label={showPwd ? "Hide password" : "Show password"}
             >
-              {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              {showPwd ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
             </button>
           </div>
         </div>
@@ -112,14 +109,12 @@ export default function LoginPage() {
         <SubmitButton />
       </form>
 
-      {/* Divider */}
       <div className="flex items-center gap-3">
         <Separator className="flex-1" />
         <span className="text-xs text-text-muted">or continue with</span>
         <Separator className="flex-1" />
       </div>
 
-      {/* Google OAuth */}
       <form action="/api/auth/signin/google" method="POST">
         <input type="hidden" name="callbackUrl" value={callbackUrl} />
         <Button type="submit" variant="secondary" className="w-full" size="lg">
@@ -133,13 +128,23 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      {/* Register link */}
       <p className="text-center text-sm text-text-secondary">
         Don&apos;t have an account?{" "}
-        <Link href="/register" className="font-medium text-brand hover:text-brand-light transition-colors">
+        <Link
+          href="/register"
+          className="font-medium text-brand hover:text-brand-light transition-colors"
+        >
           Create one for free
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="space-y-6 animate-fade-in-up" />}>
+      <LoginForm />
+    </Suspense>
   );
 }

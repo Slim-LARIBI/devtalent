@@ -1,5 +1,5 @@
 "use client";
-
+import type { Route } from "next";
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -35,7 +35,7 @@ const EXPERT_NAV: NavItem[] = [
   { label: "Dashboard",     href: "/expert/dashboard",    icon: LayoutDashboard },
   { label: "Browse Missions", href: "/missions", icon: Search },
   { label: "My Applications", href: "/expert/applications", icon: FileText },
-  { label: "My Profile",    href: "/expert/profile",      icon: User },
+  { label: "My Profile",    href: "/expert/my-profile",   icon: User },
 ];
 
 const RECRUITER_NAV: NavItem[] = [
@@ -87,7 +87,7 @@ function NavLink({
   const Icon = item.icon;
   return (
     <Link
-      href={item.href}
+      href={item.href as Route}
       className={cn(
         "relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-150 group",
         active
@@ -220,13 +220,13 @@ export function Sidebar({ role, user, collapsed = false, onCollapseToggle }: Sid
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href={`${basePath}/profile`}>
+              <Link href={(role === "EXPERT" ? "/expert/my-profile" : `${basePath}/profile`) as Route}>
                 <User className="h-4 w-4" />
                 My Profile
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`${basePath}/settings`}>
+              <Link href={`${basePath}/settings` as Route}>
                 <Settings className="h-4 w-4" />
                 Settings
               </Link>

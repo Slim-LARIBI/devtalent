@@ -5,8 +5,9 @@ import { redirect } from "next/navigation";
 export default async function Page({
   params,
 }: {
-  params: { token: string };
+  params: Promise<{ token: string }>;
 }) {
+  const { token } = await params;
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -14,7 +15,7 @@ export default async function Page({
   }
 
   const invitation = await prisma.organizationInvitation.findUnique({
-    where: { token: params.token },
+    where: { token },
     include: {
       organization: {
         select: {
