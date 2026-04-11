@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
+import { ApplicationNotificationEmail } from "@/components/email/application-notification-email";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -33,7 +34,15 @@ export async function submitApplicationAction(input: ApplyInput) {
 
   const expert = await prisma.expertProfile.findUnique({
     where: { userId: session.user.id },
-    select: { id: true },
+    select: {
+      id: true,
+      user: {
+        select: {
+          email: true,
+          name: true,
+        },
+      },
+    },
   });
 
   if (!expert) {
@@ -45,10 +54,7 @@ export async function submitApplicationAction(input: ApplyInput) {
       expertId: expert.id,
       type: "CV",
     },
-    orderBy: [
-      { isPrimary: "desc" },
-      { createdAt: "desc" },
-    ],
+    orderBy: [{ isPrimary: "desc" }, { createdAt: "desc" }],
     select: {
       id: true,
       name: true,
@@ -67,7 +73,22 @@ export async function submitApplicationAction(input: ApplyInput) {
       id: parsed.data.missionId,
       status: "PUBLISHED",
     },
-    select: { id: true, title: true },
+    select: {
+      id: true,
+      title: true,
+      country: true,
+      recruiter: {
+        select: {
+          id: true,
+          user: {
+            select: {
+              email: true,
+              name: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!mission) {
@@ -141,6 +162,35 @@ export async function submitApplicationAction(input: ApplyInput) {
       </div>
     `,
   });
+
+  const recruiterEmail = mission.recruiter?.user?.email;
+  if (recruiterEmail) {
+    const expertName =
+      expert.user?.name ||
+      session.user.name ||
+      "An expert";
+
+    const recruiterName =
+      mission.recruiter?.user?.name ||
+      undefined;
+
+    const applicationUrl = `${process.env.NEXTAUTH_URL}/recruiter/applications/${application.id}`;
+
+    await sendEmail({
+      to: recruiterEmail,
+      subject: `New application for ${mission.title} 🚀`,
+      html: ApplicationNotificationEmail({
+        recruiterName,
+        expertName,
+        expertEmail: expert.user?.email || session.user.email || "",
+        missionTitle: mission.title,
+        missionCountry: mission.country || undefined,
+        missionDonor: undefined,
+        coverLetter: parsed.data.coverNote,
+        applicationUrl,
+      }),
+    });
+  }
 
   revalidatePath("/expert/dashboard");
   revalidatePath("/missions");

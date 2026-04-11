@@ -3,4 +3,7 @@ import { ourFileRouter } from "./core";
 
 export const { GET, POST } = createRouteHandler({
   router: ourFileRouter,
+  config: {
+    callbackUrl: "https://devtalent.tech/api/uploadthing",
+  },
 });

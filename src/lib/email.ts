@@ -13,7 +13,7 @@ export async function sendEmail({
 }) {
   try {
     const result = await resend.emails.send({
-      from: "DevTalent <onboarding@resend.dev>",
+      from: process.env.EMAIL_FROM || "DevTalent <no-reply@devtalent.tech>",
       to,
       subject,
       html,
