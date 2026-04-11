@@ -15,11 +15,13 @@ import { loginSchema } from "@/lib/validations/auth";
 import type { UserRole } from "@prisma/client";
 
 const config: NextAuthConfig = {
+  trustHost: true,
+    secret: "devtalent_super_secret_change_me_2026",
   adapter: PrismaAdapter(prisma),
 
   session: {
-    strategy: "jwt", // JWT for credentials; database sessions for OAuth
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60,
   },
 
   pages: {
