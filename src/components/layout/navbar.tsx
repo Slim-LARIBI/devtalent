@@ -12,6 +12,8 @@ const NAV_LINKS = [
   { label: "For Experts", href: "/experts" },
   { label: "For Recruiters", href: "/recruiters" },
   { label: "How it works", href: "/#how-it-works" },
+  { label: "Contact", href: "/contact" },
+
 ];
 
 export function Navbar() {
